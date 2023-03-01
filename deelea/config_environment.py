@@ -1,0 +1,38 @@
+import os
+
+# NOTHING ELSE SHOULD BE HERE TO AVOID THAT ANY LIBRARIES ARE INCLUDED
+def SETUP_ENVIRONMENT(RESSOURCES_PER_TRIAL=None):
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    SLURM_CPUS_PER_TASK = os.getenv("SLURM_CPUS_PER_TASK")
+
+    if SLURM_CPUS_PER_TASK is None:
+        SLURM_CPUS_PER_TASK = "4"
+        SERVER = False
+        if RESSOURCES_PER_TRIAL is None:
+            RESSOURCES_PER_TRIAL = 4
+        elif RESSOURCES_PER_TRIAL == -1:
+            RESSOURCES_PER_TRIAL = 6
+
+        if RESSOURCES_PER_TRIAL > 6:
+            RESSOURCES_PER_TRIAL = 6
+    else:
+        if RESSOURCES_PER_TRIAL is None:
+            RESSOURCES_PER_TRIAL = 4
+        elif RESSOURCES_PER_TRIAL == -1:
+            RESSOURCES_PER_TRIAL = int(SLURM_CPUS_PER_TASK) - 1
+
+        SERVER = True
+
+    os.environ["OMP_NUM_THREADS"] = str(RESSOURCES_PER_TRIAL)
+    os.environ["MKL_NUM_THREADS"] = str(RESSOURCES_PER_TRIAL)
+    os.environ["NUMEXPR_NUM_THREADS"] = str(RESSOURCES_PER_TRIAL)
+    os.environ["OPENBLAS_NUM_THREADS"] = str(RESSOURCES_PER_TRIAL)
+    os.environ["BLIS_NUM_THREADS"] = str(RESSOURCES_PER_TRIAL)
+
+    import torch
+
+    torch.set_num_threads(RESSOURCES_PER_TRIAL)
+    SLURM_CPUS_PER_TASK = int(SLURM_CPUS_PER_TASK)
+
+    return SLURM_CPUS_PER_TASK, RESSOURCES_PER_TRIAL, SERVER
